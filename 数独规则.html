@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>soduku</title>
+  <style>
+  body {
+    background-color: #e1f7ea;
+    font-family: Trebuchet MS, sans-serif;
+  }
+  
+  .container {
+    width: 400px;
+    margin: 0 auto;
+    text-align: center;
+  }
+   h1 {
+    font-size: 36px;
+    color: #333;
+  }
+  
+  button {
+    background-color: #336d36;
+    color: white;
+    padding: 8px 14px;
+    margin: 30px 0;
+    border: none;
+    cursor: pointer;
+    width: 200px;
+    height: 50px;
+    font-size: 16px;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+  <h1>数独规则</h1>
+  <p>开始游戏：进入数独页面</p>
+  <p>选择难度：分为简单、中等、困难、大师四个难度，点击返回则可返回开始界面</p>
+  <p>选择难度后会并发出现9个对应难度的数独问题</p>
+  <p>点击查看答案会并发出现9个数独对应的答案</p>
+  <button onclick="window.location.href='index.html'">返回</button>
+  <script src="soduku.js"></script>
+  </div>
+</body>
+</html>
