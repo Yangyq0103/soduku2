@@ -17,6 +17,7 @@ ul,li{
     width: 26px;
     line-height: 26px;
     text-align: center;
+    box-sizing: border-box;
 }
 .sdli{
     width: 100%;
@@ -60,4 +61,38 @@ ul,li{
     margin-top:20px;
     text-align:center;
 }
+html {
+    zoom: 0.8;
+}
+/* 添加鞭炮动画的样式 */
+/* 鞭炮动画的样式 */
+#fireworks-animation {
+    display: none; /* 初始时隐藏 */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+    background-image: url('fireworks.gif'); /* 鞭炮动画的图片 */
+    background-size: cover;
+    background-repeat: no-repeat;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+
+@keyframes fireworks-explode {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+
+
  

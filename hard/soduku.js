@@ -1,29 +1,31 @@
 function SD(){
 	this.sdArr = [];//生成的数独数组	
 	this.errorArr = [];//错误的格子。
-	this.blankNum = 30;//空白格子数量 
+	this.blankNum = [];//空白格子数量 
 	this.backupSdArr = [];//数独数组备份。
 	this.num;
-	this.originalSudokus = []; //存储原始9个数组
+	this.createBackupSdArr(); // 创建数独备份数组
+	this.gridId = "grid-" + Math.random().toString(36).substr(2, 9); // 为每个数独生成一个唯一的标识
 }
 SD.prototype={
 	constructor:SD,
-	init:function(blankNum){
+	init:function(){
 		this.createDoms();
 		this.createSdArr();
 		this.globalSdArr = JSON.parse(JSON.stringify(this.sdArr)); // 存储数独的初始状态
 		this.blankNum =3;		
 		this.drawCells();
-		this.originalSudokus.push(this.drawCells());
 		this.createBlank(this.blankNum);
 		this.createBlankCells();
-	},
+},
 	solve:function(){
-		this.createDoms();//生成九宫格
-		//this.createSdArr();//生成数独数组
+		this.createDoms();
 		this.sdArr = JSON.parse(JSON.stringify(this.globalSdArr));
-		this.drawCells();//填入九宫格
+		this.drawCells();
 	},
+	createBackupSdArr: function() {
+		this.backupSdArr = this.sdArr.slice();
+	  },
 	createSdArr:function(){
 		//生成数独数组。
 		var that = this;
@@ -127,7 +129,7 @@ SD.prototype={
 		var blankArr = [];
 		var numArr = [1,2,3,4,5,6,7,8,9];
 		var item;
-		for(var a =0;a<20+num*10;a++){
+		for(var a =0;a<10+num*10;a++){
 			do{
 				item = parseInt(numArr[getRandom(9) -1] +''+ numArr[getRandom(9) -1]);
 			}while($.inArray(item, blankArr)>-1);
@@ -156,29 +158,30 @@ SD.prototype={
 	checkRes:function(){
 		//检测用户输入结果。检测前将输入加入数组。检测单个的时候将这一个的值缓存起来并从数组中删除，检测结束在赋值回去。
 		var blankArr = this.blankArr,len = this.blankArr.length,x,y,dom,done,temp;
-		this.getInputVals();
+		this.getInputVals(this);
 		this.errorArr.length = 0;
 		for(var i =0;i<len;i++){
 			x = parseInt(blankArr[i]/10);
 			y = blankArr[i]%10;
 			temp = this.backupSdArr[blankArr[i]];
 			this.backupSdArr[blankArr[i]] = undefined;
-			this.checkCell(x,y);
+			this.checkCell(x,y,this);
 			this.backupSdArr[blankArr[i]] = temp;
-
 		}
-		done = this.isAllInputed();
+		done = this.isAllInputed(this);
 		if(this.errorArr.length == 0 && done ){
 			alert('恭喜你完成本轮游戏!');
-			$(".bg_red").removeClass('bg_red');
+			//$(".bg_red").removeClass('bg_red');
+			showFireworksAnimation();
+			$("#" + this.gridId + " .bg_red").removeClass('bg_red');
 		}else{
 			if(!done){
 				alert("你没有完成本轮游戏，看看哪里错了吧！");
 			}
-			this.showErrors();
+			this.showErrors(this);
 		}
 	},
-	checkCell:function(i,j){
+	checkCell:function(i,j,sd){
 		//检测一个格子中输入的值，在横竖宫里是否已存在。
 		var index = parseInt(i+''+j);
 		var backupSdArr = this.backupSdArr;
@@ -186,61 +189,69 @@ SD.prototype={
 		var YArr = this.getYArr(i,backupSdArr);
 		var thArr = this.getThArr(i,j,backupSdArr);
 		var arr = getConnect(getConnect(XArr,YArr),thArr);			
-		var val = parseInt($(".sdli").eq(j-1).find(".sdspan").eq(i-1).html());
+		//var val = parseInt($(".sdli").eq(j-1).find(".sdspan").eq(i-1).html());
+		var val = parseInt($("#" + sd.gridId + " .sdli").eq(j - 1).find(".sdspan").eq(i - 1).html());
 		if($.inArray(val, arr)>-1){
-			this.errorArr.push(index);
+			sd.errorArr.push(index);
+			// 在特定数独中标红错误格子
+			$("#" + sd.gridId + " .sdli").eq(j - 1).find(".sdspan").eq(i - 1).addClass('bg_red');
 		}
 	},
-	getInputVals:function(){
+	getInputVals:function(sd){
 		//将用户输入的结果添加到数组中。
 		var blankArr = this.blankArr,len = this.blankArr.length,i,x,y,dom,theval;
 		for(i=0;i<len;i++){
 			x = parseInt(blankArr[i]/10);
 			y = blankArr[i]%10;	
-			dom = $(".sdli").eq(y-1).find(".sdspan").eq(x-1);
+			dom =$("#" + sd.gridId + " .sdli").eq(y-1).find(".sdspan").eq(x-1);
+			//dom = $(".sdli").eq(y-1).find(".sdspan").eq(x-1);
 			theval = parseInt(dom.text())||undefined;
 			this.backupSdArr[blankArr[i]] = theval;
 		}
 	},
-	isAllInputed:function(){
+	isAllInputed:function(sd){
 		//检测是否全部空格都有输入。
 		var blankArr = this.blankArr,len = this.blankArr.length,i,x,y,dom;
 		for(i=0;i<len;i++){
 			x = parseInt(blankArr[i]/10);
 			y = blankArr[i]%10;	
-			dom = $(".sdli").eq(y-1).find(".sdspan").eq(x-1);
+			dom =$("#" + sd.gridId + " .sdli").eq(y-1).find(".sdspan").eq(x-1);
 			if(dom.text()==''){
 				return false
 			}
 		}
 		return true;
 	},
-	showErrors:function(){
+	showErrors:function(sd){
 		//把错误显示出来。
 		var errorArr = this.errorArr,len = this.errorArr.length,x,y,dom;
 		$(".bg_red").removeClass('bg_red');
 		for(var i =0;i<len;i++){
 			x = parseInt(errorArr[i]/10);
 			y = errorArr[i]%10;	
-			dom = $(".sdli").eq(y-1).find(".sdspan").eq(x-1);
+			dom =$("#" + sd.gridId + " .sdli").eq(y-1).find(".sdspan").eq(x-1);
 			dom.addClass('bg_red');
 		}
 	},
-	createDoms:function(){
-		//生成九宫格。
-		var html='<ul class="sd clearfix">';
-		String.prototype.times = String.prototype.times || function(n) { return (new Array(n+1)).join(this);}; 
-		html = html + ('<li class="sdli">'+'<span class="sdspan"></span>'.times(9) +'</li>').times(9)+'</ul>';
+	createDoms: function () {
+		var gridId = this.gridId; // 获取数独的唯一标识
+		var html = '<ul class="sd clearfix" id="' + gridId + '">';
+		String.prototype.times = String.prototype.times || function (n) {
+		  return (new Array(n + 1)).join(this);
+		};
+		html = html + ('<li class="sdli">' + '<span class="sdspan"></span>'.times(9) + '</li>').times(9) + '</ul>';
 		$("body").prepend(html);
-		for(var k=0;k<9;k++){
-			$(".sdli:eq("+k+") .sdspan").eq(2).addClass('br');
-			$(".sdli:eq("+k+") .sdspan").eq(5).addClass('br');
-			$(".sdli:eq("+k+") .sdspan").eq(3).addClass('bl');
-			$(".sdli:eq("+k+") .sdspan").eq(6).addClass('bl');
+		var k;
+		for (k = 0; k < 9; k++) {
+		  $("#" + gridId + " .sdli:eq(" + k + ") .sdspan").eq(2).addClass('br');
+		  $("#" + gridId + " .sdli:eq(" + k + ") .sdspan").eq(5).addClass('br');
+		  $("#" + gridId + " .sdli:eq(" + k + ") .sdspan").eq(3).addClass('bl');
+		  $("#" + gridId + " .sdli:eq(" + k + ") .sdspan").eq(6).addClass('bl');
 		}
-		$(".sdli:eq(2) .sdspan,.sdli:eq(5) .sdspan").addClass('bb');
-		$(".sdli:eq(3) .sdspan,.sdli:eq(6) .sdspan").addClass('bt');
-	}
+		$("#" + gridId + " .sdli:eq(2) .sdspan, #" + gridId + " .sdli:eq(5) .sdspan").addClass('bb');
+		$("#" + gridId + " .sdli:eq(3) .sdspan, #" + gridId + " .sdli:eq(6) .sdspan").addClass('bt');
+	  }
+	  
 }
 //生成随机正整数
 function getRandom(n){
@@ -266,23 +277,35 @@ function　arrMinus(arr1,arr2){
 	}
 	return resArr;
 }
-
 let initSudokus = [];
+var num1=1,cnt=1;
 async function generateSudokus() {
-  let initPromises = [];
+  let initPromises = [];  
   for (let i = 0; i < 9; i++) {	  
-  initPromises.push(new Promise(resolve => {
+  initPromises.push(new Promise(resolve => {	
     let sd = new SD();
     sd.init();
-    resolve(sd);
+	resolve(sd);
   }));
-  }
+}
   initSudokus = await Promise.all(initPromises);
   console.log("After init:");
   initSudokus.forEach((sd, i) => {
   console.log(`Sudoku ${i}:`, sd.sdArr);
   });
+  addEventListeners();  
 }
+  function addEventListeners() {
+	for (let i = 0; i < 9; i++) {
+	  let checkButton = document.getElementById(`check-button-${i + 1}`);
+	  
+	  checkButton.addEventListener('click', (function(index) {
+		return function() {
+		  initSudokus[index].checkRes();
+		};
+	  })(i));
+	}
+  } 
 async function solveSudokus() {
   let solvePromises = [];
   for (let i = 0; i < 9; i++) {	  
@@ -291,23 +314,34 @@ async function solveSudokus() {
     sd.solve();
     resolve(sd);
   }));
-  }
+}
   let solvedSudokus = await Promise.all(solvePromises);
   console.log("After solve:");
   solvedSudokus.forEach((sd, i) => {
-  console.log(`Sudoku ${i}:`, sd.sdArr);
- 
+  console.log(`Sudoku ${i}:`, sd.sdArr); 
   });
 }
 window.onload = generateSudokus;  // 当页面加载完毕后，生成数独
-// 获取按钮元素，并设置其点击事件
+//取按钮元素，并设置其点击事件
 let solveButton = document.getElementById("solve-button");
 solveButton.addEventListener("click", async function() {
 	let ulElements = document.querySelectorAll("ul.sd.clearfix");
-	ulElements.forEach(element => {
-		element.remove();
-	});
+		ulElements.forEach(element => {
+  		element.remove();
+});
 	let buttonElement = document.getElementById("solve-button");
 	buttonElement.remove();
-  solveSudokus();
+	solveSudokus();
 });
+
+function showFireworksAnimation() {
+    var fireworksContainer = document.getElementById("fireworks-animation");
+    fireworksContainer.style.display = "block"; // 显示鞭炮动画
+    
+    // 一段时间后隐藏鞭炮动画
+    setTimeout(function () {
+        fireworksContainer.style.display = "none"; // 隐藏鞭炮动画
+    }, 2000); // 调整持续时间
+}
+
+  
